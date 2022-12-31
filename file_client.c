@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-
+#include <string.h>
 int main()
 {
 
@@ -15,11 +15,23 @@ int main()
         {
             return 1;
         }
-
         printf("input gir: ");
         scanf("%[^\n]%*c", send);
         write(fd, send, strlen(send) + 1);
-        printf("sended: %s\n",send);
+        /*char *str = strtok(send, " ");
+        int i = 0;
+        write(fd, str, strlen(str) + 1);
+        strArr[i] = str;
+        i++;
+        while (str != NULL) // inputu parçalara ayırma
+        {
+            str = strtok(NULL, " ");
+            write(fd, str, strlen(str) + 1);
+            strArr[i] = str;
+            i++;
+        }
+        i--;*/
+        printf("sended: %s\n", send);
         close(fd);
         fd = open("pipe", O_RDONLY);
         if (fd == -1)
