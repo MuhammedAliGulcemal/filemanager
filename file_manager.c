@@ -17,6 +17,7 @@ char *strArr[5];
 int fileIndex = 0;
 char *fileName = "0";
 int nullIndex = 0;
+char fileMessage[256];
 
 void createFonk()
 {
@@ -31,7 +32,16 @@ void createFonk()
 void deleteFonk()
 {
     pthread_mutex_lock(&mutexLock);
-    puts("file delete");
+    fileList[fileIndex] = NULL;
+    if (remove(fileName) == 0)
+    {
+        puts("Deleted successfully");
+    }
+    else
+    {
+        puts("Unable to delete the file");
+    }
+    puts(fileName);
     pthread_mutex_unlock(&mutexLock);
 }
 
@@ -39,12 +49,21 @@ void readFonk()
 {
     pthread_mutex_lock(&mutexLock);
     puts("file read");
+    FILE *f = fopen(fileName, "r");
+    while (fgets(fileMessage,256,f)!=NULL)
+    {
+        puts(fileMessage);
+    }
+    fclose(f);
     pthread_mutex_unlock(&mutexLock);
 }
 void writeFonk()
 {
     pthread_mutex_lock(&mutexLock);
     puts("file write");
+    FILE *f = fopen(fileName, "w");
+    fputs(strArr[2],f);
+    fclose(f);
     pthread_mutex_unlock(&mutexLock);
 }
 
@@ -56,17 +75,17 @@ int fileControl(char *fileName)
         puts("for donuyor");
         if (fileList[i] != NULL)
         {
+            puts(fileList[i]);
+            puts(fileName);
             puts("null değil");
-            if (strcmp(fileList[i], fileName))
+            if (strcmp(fileList[i], fileName) == 0)
             {
                 puts("filelist dönüyor");
                 fileIndex = i;
+                printf("index: %d",fileIndex );
                 return i;
             }
-            if (fileList[i] != NULL)
-            {
-                nullIndex++;
-            }
+            nullIndex++;
         }
     }
     fileIndex = 10;
@@ -89,20 +108,14 @@ int main()
         }
     }
     message = "calisti";
-    for (int i = 0; i < threadsayi; ++i)
-    {
-        pthread_join(threadList[i], &status);
-    }
     while (strcmp(command, "exit"))
     {
-
         puts("while");
         int fd = open("pipe", O_RDONLY);
         if (fd == -1)
         {
             return 1;
         }
-
         read(fd, recieve, 256);
         puts(recieve);
         char *str = strtok(recieve, " ");
@@ -139,24 +152,54 @@ int main()
         }
         else if (strcmp(command, "delete") == 0)
         {
-            pthread_create(threadList + count, NULL, deleteFonk, count + 1);
-            puts(command);
-            message = "delete yapildi";
-            count++;
+            fileIndex = fileControl(strArr[1]);
+            fileName = strArr[1];
+            if (fileIndex != 10 )
+            {
+                pthread_create(threadList + count, NULL, deleteFonk, count + 1);
+                puts(command);
+                message = "delete yapildi";
+                count++;
+            }
+            else
+            {
+                message = "file not exists";
+            }
         }
         else if (strcmp(command, "read") == 0)
         {
-            pthread_create(threadList + count, NULL, readFonk, count + 1);
-            puts(command);
-            message = "read yapildi";
-            count++;
+            fileIndex = fileControl(strArr[1]);
+            fileName = strArr[1];
+            if (fileIndex != 10)
+            {
+                pthread_create(threadList + count, NULL, readFonk, count + 1);
+                puts(command);
+                strcpy(message,fileMessage);
+                count++;
+            }
+            else
+            {
+                message = "file not exists";
+            }
         }
         else if (strcmp(command, "write") == 0)
         {
-            pthread_create(threadList + count, NULL, writeFonk, count + 1);
-            puts(command);
-            message = "write yapildi";
-            count++;
+            fileIndex = fileControl(strArr[1]);
+            fileName = strArr[1];
+            puts(strArr[0]);
+            puts(strArr[1]);
+            puts(strArr[2]);
+            if (fileIndex != 10)
+            {
+                pthread_create(threadList + count, NULL, writeFonk, count + 1);
+                puts(command);
+                message = "write yapildi";
+                count++;
+            }
+            else
+            {
+                message = "file not exists";
+            }
         }
         else if (strcmp(command, "exit") == 0)
         {
@@ -167,7 +210,10 @@ int main()
         {
             message = "yanlis input";
         }
-        
+        for (int i = 0; i < threadsayi; ++i)
+        {
+            pthread_join(threadList[i], &status);
+        }
         close(fd);
         fd = open("pipe", O_WRONLY);
         if (fd == -1)
