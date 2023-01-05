@@ -23,7 +23,6 @@ void *createFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
     fileList[fileIndex] = strArr[1];
-    puts("FILE CREATE:");
     FILE *f = fopen(strArr[1], "w");
     fclose(f);
     pthread_mutex_unlock(&mutexLock);
@@ -33,7 +32,6 @@ void *deleteFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
     fileList[fileIndex] = NULL;
-    puts("FILE DELETE:");
     remove(strArr[1]);
     pthread_mutex_unlock(&mutexLock);
     return NULL;
@@ -42,7 +40,6 @@ void *deleteFonk(void *arg)
 void *readFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
-    puts("FILE READ");
     FILE *f = fopen("mali", "r");
     while (fgets(fileMessage, 256, f) != NULL)
     {
@@ -56,7 +53,6 @@ void *writeFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
     fileList[fileIndex] = strArr[1];
-    puts("FILE WRITE:");
     FILE *f = fopen(strArr[1], "w");
     fputs(strArr[2], f);
     fclose(f);
@@ -66,18 +62,12 @@ void *writeFonk(void *arg)
 
 int fileControl()
 {
-    puts("FILE CONTROL:");
     for (int i = 0; i < 10; i++)
     {
         if (fileList[i] != NULL)
         {
-            printf("Filelist %d: ", i);
-            puts(fileList[i]);
-            printf("Filename: ");
-            puts(strArr[1]);
             if (strcmp(fileList[i], strArr[1]) == 0)
             {
-                puts("esitlik var");
                 fileIndex = i;
                 return 0;
             }
@@ -94,27 +84,21 @@ int fileControl()
 int writeControl()
 {
     int control = 1;
-    puts("WRITE CONTROL");
     for (int i = 0; i < 10; i++)
     {
         if (fileList[i] != NULL)
         {
-            printf("Filelist %d: ", i);
-            puts(fileList[i]);
-            printf("Filename: ");
-            puts(strArr[1]);
             for (int j = 0; j < strlen(fileList[i]); j++)
             {
-                puts("FOR GIRDI");
+
                 if (*(fileList[i] + j) == *(strArr[i] + j + 1))
                 {
-                    puts("IF GIRDI");
                     control = 0;
                 }
             }
             if (control)
             {
-                puts("ESITLIK VAR");
+
                 fileIndex = i;
                 return 0;
             }
@@ -127,27 +111,19 @@ int writeControl()
 int readControl()
 {
     int control = 1;
-    puts("READ CONTROL");
     for (int i = 0; i < 10; i++)
     {
         if (fileList[i] != NULL)
         {
-            printf("Filelist %d: ", i);
-            puts(fileList[i]);
-            printf("Filename: ");
-            puts(strArr[1]);
             for (int j = 0; j < strlen(fileList[i]); j++)
             {
-                puts("FOR GIRDI");
                 if (*(fileList[i] + j) == *(strArr[i] + j + 1))
                 {
-                    puts("IF GIRDI");
                     control = 0;
                 }
             }
             if (control)
             {
-                puts("ESITLIK VAR");
                 fileIndex = i;
                 return 0;
             }
@@ -167,18 +143,6 @@ int main()
     command = "mali";
     while (strcmp(command, "exit"))
     {
-        for (int i = 0; i < 10; i++)
-        {
-            if (fileList[i] != NULL)
-            {
-                puts(fileList[i]);
-            }
-            else
-            {
-                puts("NULL");
-            }
-        }
-
         int fd = open(pipeSelected, O_RDONLY);
         if (fd == -1)
         {
@@ -196,22 +160,15 @@ int main()
             i++;
         }
         i--;
-        for (int j = 0; j < i; j++)
-        {
-            printf("Input %d: ", j);
-            puts(strArr[j]);
-        }
         command = strArr[0];
         close(fd);
         if (strcmp(command, "create") == 0)
         {
-            fileControl();
+            fileControl(); 
             if (fileIndex != 10)
             {
-                printf("Fileindex1: %d\n", fileIndex);
                 if (fileList[fileIndex] == NULL)
                 {
-                    printf("Fileindex2: %d\n", fileIndex);
                     pthread_create(threadList + count, NULL, createFonk, NULL);
                     pthread_join(threadList[count], NULL);
                     count++;
@@ -221,7 +178,7 @@ int main()
                 {
                     message = "File already exists!";
                 }
-            }
+            } 
             else
             {
                 message = "File list is full!";
@@ -232,7 +189,6 @@ int main()
             fileControl();
             if (fileIndex != 10)
             {
-                printf("Fileindex1: %d\n", fileIndex);
                 if (fileList[fileIndex] == NULL)
                 {
                     message = "File is not exists!";
@@ -241,7 +197,7 @@ int main()
                 {
                     if (strcmp(fileList[fileIndex], strArr[1]) == 0)
                     {
-                        printf("Fileindex2: %d\n", fileIndex);
+                      
                         pthread_create(threadList + count, NULL, deleteFonk, NULL);
                         pthread_join(threadList[count], NULL);
                         count++;
@@ -259,7 +215,7 @@ int main()
             readControl();
             if (fileIndex != 10)
             {
-                printf("Fileindex1: %d\n", fileIndex);
+                
                 if (fileList[fileIndex] == NULL)
                 {
                     message = "File is not exists!";
@@ -268,7 +224,6 @@ int main()
                 {
                     if (fileIndex != 10)
                     {
-                        printf("Fileindex2: %d\n", fileIndex);
                         pthread_create(threadList + count, NULL, readFonk, NULL);
                         pthread_join(threadList[count], NULL);
                         count++;
@@ -286,7 +241,7 @@ int main()
             writeControl();
             if (fileIndex != 10)
             {
-                printf("Fileindex1: %d\n", fileIndex);
+                
                 if (fileList[fileIndex] == NULL)
                 {
                     message = "File is not exists!";
@@ -295,7 +250,7 @@ int main()
                 {
                     if (fileIndex != 10)
                     {
-                        printf("Fileindex2: %d\n", fileIndex);
+                      
                         pthread_create(threadList + count, NULL, writeFonk, NULL);
                         pthread_join(threadList[count], NULL);
                         count++;
@@ -319,7 +274,7 @@ int main()
             return 1;
         }
         write(fd, message, strlen(message) + 1);
-        printf("message: %s\n", message);
+        printf("Message: %s\n", message);
         close(fd);
         pthread_mutex_destroy(&mutexLock);
     }
