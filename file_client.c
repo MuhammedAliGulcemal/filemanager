@@ -3,14 +3,19 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+
+char send[256];
+char pipeSelected[256] = "pipe";
+int counter = 0;
 int main()
 {
-
-    char send[256];
+    
     while (strcmp(send, "exit"))
     {
 
-        int fd = open("pipe", O_WRONLY);
+        puts("while girdi");
+        puts(pipeSelected);
+        int fd = open(pipeSelected, O_WRONLY);
         if (fd == -1)
         {
             return 1;
@@ -18,22 +23,9 @@ int main()
         printf("input gir: ");
         scanf("%[^\n]%*c", send);
         write(fd, send, strlen(send) + 1);
-        /*char *str = strtok(send, " ");
-        int i = 0;
-        write(fd, str, strlen(str) + 1);
-        strArr[i] = str;
-        i++;
-        while (str != NULL) // inputu parçalara ayırma
-        {
-            str = strtok(NULL, " ");
-            write(fd, str, strlen(str) + 1);
-            strArr[i] = str;
-            i++;
-        }
-        i--;*/
         printf("sended: %s\n", send);
         close(fd);
-        fd = open("pipe", O_RDONLY);
+        fd = open(pipeSelected, O_RDONLY);
         if (fd == -1)
         {
             return 1;

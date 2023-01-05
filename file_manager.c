@@ -7,222 +7,322 @@
 
 pthread_mutex_t mutexLock;
 char *fileList[10];
-int threadsayi = 5;
-pthread_t threadList[5];
-void *status;
+int threadsayi = 100;
+pthread_t threadList[100];
 int count = 0;
 char *message;
 char recieve[256];
 char *strArr[5];
 int fileIndex = 0;
-char *fileName = "0";
 int nullIndex = 0;
 char fileMessage[256];
+char pipeSelected[256] = "pipe";
+char *command;
 
-void createFonk()
+void *createFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
-    puts("file create");
-    fileList[nullIndex] = fileName;
-    FILE *f = fopen(fileName, "w");
+    fileList[fileIndex] = strArr[1];
+    puts("FILE CREATE:");
+    FILE *f = fopen(strArr[1], "w");
     fclose(f);
-    puts(fileName);
     pthread_mutex_unlock(&mutexLock);
+    return NULL;
 }
-void deleteFonk()
+void *deleteFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
     fileList[fileIndex] = NULL;
-    if (remove(fileName) == 0)
-    {
-        puts("Deleted successfully");
-    }
-    else
-    {
-        puts("Unable to delete the file");
-    }
-    puts(fileName);
+    puts("FILE DELETE:");
+    remove(strArr[1]);
     pthread_mutex_unlock(&mutexLock);
+    return NULL;
 }
 
-void readFonk()
+void *readFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
-    puts("file read");
-    FILE *f = fopen(fileName, "r");
-    while (fgets(fileMessage,256,f)!=NULL)
+    puts("FILE READ");
+    FILE *f = fopen("mali", "r");
+    while (fgets(fileMessage, 256, f) != NULL)
     {
         puts(fileMessage);
     }
     fclose(f);
     pthread_mutex_unlock(&mutexLock);
+    return NULL;
 }
-void writeFonk()
+void *writeFonk(void *arg)
 {
     pthread_mutex_lock(&mutexLock);
-    puts("file write");
-    FILE *f = fopen(fileName, "w");
-    fputs(strArr[2],f);
+    fileList[fileIndex] = strArr[1];
+    puts("FILE WRITE:");
+    FILE *f = fopen(strArr[1], "w");
+    fputs(strArr[2], f);
     fclose(f);
     pthread_mutex_unlock(&mutexLock);
+    return NULL;
 }
 
-int fileControl(char *fileName)
+int fileControl()
 {
-    nullIndex = 0;
+    puts("FILE CONTROL:");
     for (int i = 0; i < 10; i++)
     {
-        puts("for donuyor");
         if (fileList[i] != NULL)
         {
+            printf("Filelist %d: ", i);
             puts(fileList[i]);
-            puts(fileName);
-            puts("null değil");
-            if (strcmp(fileList[i], fileName) == 0)
+            printf("Filename: ");
+            puts(strArr[1]);
+            if (strcmp(fileList[i], strArr[1]) == 0)
             {
-                puts("filelist dönüyor");
+                puts("esitlik var");
                 fileIndex = i;
-                printf("index: %d",fileIndex );
-                return i;
+                return 0;
             }
-            nullIndex++;
+        }
+        else
+        {
+            fileIndex = i;
+            return 0;
         }
     }
     fileIndex = 10;
-    return 10;
+    return 0;
+}
+int writeControl()
+{
+    int control = 1;
+    puts("WRITE CONTROL");
+    for (int i = 0; i < 10; i++)
+    {
+        if (fileList[i] != NULL)
+        {
+            printf("Filelist %d: ", i);
+            puts(fileList[i]);
+            printf("Filename: ");
+            puts(strArr[1]);
+            for (int j = 0; j < strlen(fileList[i]); j++)
+            {
+                puts("FOR GIRDI");
+                if (*(fileList[i] + j) == *(strArr[i] + j + 1))
+                {
+                    puts("IF GIRDI");
+                    control = 0;
+                }
+            }
+            if (control)
+            {
+                puts("ESITLIK VAR");
+                fileIndex = i;
+                return 0;
+            }
+        }
+    }
+    fileIndex = 10;
+    return 0;
+}
+
+int readControl()
+{
+    int control = 1;
+    puts("READ CONTROL");
+    for (int i = 0; i < 10; i++)
+    {
+        if (fileList[i] != NULL)
+        {
+            printf("Filelist %d: ", i);
+            puts(fileList[i]);
+            printf("Filename: ");
+            puts(strArr[1]);
+            for (int j = 0; j < strlen(fileList[i]); j++)
+            {
+                puts("FOR GIRDI");
+                if (*(fileList[i] + j) == *(strArr[i] + j + 1))
+                {
+                    puts("IF GIRDI");
+                    control = 0;
+                }
+            }
+            if (control)
+            {
+                puts("ESITLIK VAR");
+                fileIndex = i;
+                return 0;
+            }
+        }
+    }
+    fileIndex = 10;
+    return 0;
 }
 
 int main()
 {
-    char *command = "mali";
-    for (int i = 0; i < threadsayi; ++i)
+    if (pthread_mutex_init(&mutexLock, NULL) != 0)
     {
-        pthread_join(threadList[i], &status);
+        printf("mutex init hatasi\n");
+        return 1;
     }
-    for (int i = 0; i < 5; i++)
-    {
-        if (pthread_mutex_init(&mutexLock, NULL) != 0)
-        {
-            printf("\n mutex init hatasi\n");
-            return 1;
-        }
-    }
-    message = "calisti";
+    command = "mali";
     while (strcmp(command, "exit"))
     {
-        puts("while");
-        int fd = open("pipe", O_RDONLY);
+        for (int i = 0; i < 10; i++)
+        {
+            if (fileList[i] != NULL)
+            {
+                puts(fileList[i]);
+            }
+            else
+            {
+                puts("NULL");
+            }
+        }
+
+        int fd = open(pipeSelected, O_RDONLY);
         if (fd == -1)
         {
             return 1;
         }
         read(fd, recieve, 256);
-        puts(recieve);
         char *str = strtok(recieve, " ");
         int i = 0;
         strArr[i] = str;
         i++;
-        while (str != NULL) // inputu parçalara ayırma
+        while (str != NULL)
         {
             str = strtok(NULL, " ");
             strArr[i] = str;
             i++;
         }
         i--;
-        for (int j = i; j < i; j++)
+        for (int j = 0; j < i; j++)
         {
-            puts(strArr[i]);
+            printf("Input %d: ", j);
+            puts(strArr[j]);
         }
         command = strArr[0];
+        close(fd);
         if (strcmp(command, "create") == 0)
         {
-            fileIndex = fileControl(strArr[1]);
-            fileName = strArr[1];
-            if (fileIndex == 10 && nullIndex != 10)
+            fileControl();
+            if (fileIndex != 10)
             {
-                pthread_create(threadList + count, NULL, createFonk, count + 1);
-                puts(command);
-                message = "create yapildi";
-                count++;
+                printf("Fileindex1: %d\n", fileIndex);
+                if (fileList[fileIndex] == NULL)
+                {
+                    printf("Fileindex2: %d\n", fileIndex);
+                    pthread_create(threadList + count, NULL, createFonk, NULL);
+                    pthread_join(threadList[count], NULL);
+                    count++;
+                    message = "File created";
+                }
+                else
+                {
+                    message = "File already exists!";
+                }
             }
             else
             {
-                message = "file exists";
+                message = "File list is full!";
             }
         }
         else if (strcmp(command, "delete") == 0)
         {
-            fileIndex = fileControl(strArr[1]);
-            fileName = strArr[1];
-            if (fileIndex != 10 )
+            fileControl();
+            if (fileIndex != 10)
             {
-                pthread_create(threadList + count, NULL, deleteFonk, count + 1);
-                puts(command);
-                message = "delete yapildi";
-                count++;
+                printf("Fileindex1: %d\n", fileIndex);
+                if (fileList[fileIndex] == NULL)
+                {
+                    message = "File is not exists!";
+                }
+                else
+                {
+                    if (strcmp(fileList[fileIndex], strArr[1]) == 0)
+                    {
+                        printf("Fileindex2: %d\n", fileIndex);
+                        pthread_create(threadList + count, NULL, deleteFonk, NULL);
+                        pthread_join(threadList[count], NULL);
+                        count++;
+                        message = "File deleted";
+                    }
+                }
             }
             else
             {
-                message = "file not exists";
+                message = "File is not exists!";
             }
         }
         else if (strcmp(command, "read") == 0)
         {
-            fileIndex = fileControl(strArr[1]);
-            fileName = strArr[1];
+            readControl();
             if (fileIndex != 10)
             {
-                pthread_create(threadList + count, NULL, readFonk, count + 1);
-                puts(command);
-                strcpy(message,fileMessage);
-                count++;
+                printf("Fileindex1: %d\n", fileIndex);
+                if (fileList[fileIndex] == NULL)
+                {
+                    message = "File is not exists!";
+                }
+                else
+                {
+                    if (fileIndex != 10)
+                    {
+                        printf("Fileindex2: %d\n", fileIndex);
+                        pthread_create(threadList + count, NULL, readFonk, NULL);
+                        pthread_join(threadList[count], NULL);
+                        count++;
+                        message = fileMessage;
+                    }
+                }
             }
             else
             {
-                message = "file not exists";
+                message = "File is not exists!";
             }
         }
         else if (strcmp(command, "write") == 0)
         {
-            fileIndex = fileControl(strArr[1]);
-            fileName = strArr[1];
-            puts(strArr[0]);
-            puts(strArr[1]);
-            puts(strArr[2]);
+            writeControl();
             if (fileIndex != 10)
             {
-                pthread_create(threadList + count, NULL, writeFonk, count + 1);
-                puts(command);
-                message = "write yapildi";
-                count++;
+                printf("Fileindex1: %d\n", fileIndex);
+                if (fileList[fileIndex] == NULL)
+                {
+                    message = "File is not exists!";
+                }
+                else
+                {
+                    if (fileIndex != 10)
+                    {
+                        printf("Fileindex2: %d\n", fileIndex);
+                        pthread_create(threadList + count, NULL, writeFonk, NULL);
+                        pthread_join(threadList[count], NULL);
+                        count++;
+                        message = "File writed";
+                    }
+                }
             }
             else
             {
-                message = "file not exists";
+                message = "File is not exists!";
             }
-        }
-        else if (strcmp(command, "exit") == 0)
-        {
-
-            message = "exit yapildi";
         }
         else
         {
-            message = "yanlis input";
+            message = "Wrong Input!";
         }
-        for (int i = 0; i < threadsayi; ++i)
-        {
-            pthread_join(threadList[i], &status);
-        }
-        close(fd);
-        fd = open("pipe", O_WRONLY);
+
+        fd = open(pipeSelected, O_WRONLY);
         if (fd == -1)
         {
             return 1;
         }
         write(fd, message, strlen(message) + 1);
+        printf("message: %s\n", message);
         close(fd);
         pthread_mutex_destroy(&mutexLock);
     }
+
     return 0;
 }
